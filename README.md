@@ -2,12 +2,45 @@
 
 [![CI](https://github.com/guduruharshita/twitter-user-timeline-analytics-engagement-prediction-system/actions/workflows/ci.yml/badge.svg)](https://github.com/guduruharshita/twitter-user-timeline-analytics-engagement-prediction-system/actions)
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python)](pyproject.toml)
+[![Models](https://img.shields.io/badge/Models-3%20ensemble-blueviolet?logo=python)](src/twitter_analytics/models/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi)](src/twitter_analytics/api/main.py)
 [![XGBoost](https://img.shields.io/badge/XGBoost-2.1-EC6C00)](src/twitter_analytics/models/xgboost_model.py)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.4-EE4C2C?logo=pytorch)](src/twitter_analytics/models/neural_net.py)
+[![Tests](https://img.shields.io/badge/Tests-13%20passing-success?logo=pytest)](tests/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 End-to-end **Twitter/X engagement analytics pipeline** — from raw CSV ingestion to serving live predictions via REST API. Transforms a flat timeline export into ranked user analytics, hourly posting insights, and a three-model ensemble (XGBoost + PyTorch NN + Prophet time-series).
+
+## Why a Three-Model Ensemble
+
+Single-model engagement prediction overfits to dominant patterns and misses the interaction effects between user history, content, and posting time. The three-model ensemble attacks the problem from orthogonal angles: **XGBoost** captures non-linear feature interactions and is interpretable via SHAP feature importance; the **PyTorch MLP** learns higher-order representations the tree model cannot express; **Prophet** models hourly and weekly seasonality that neither discriminative model sees. Cyclical hour encoding (sin/cos) ensures that 11 PM and midnight are adjacent in feature space rather than 23 integers apart — a standard technique for time-based ML that most implementations skip.
+
+## System Architecture
+
+```
+┌────────────────────────────────────────────────────────────────────┐
+│                       Training Phase (CLI)                          │
+│                                                                     │
+│  tweets.csv ──▶ loader.py ──▶ preprocessor.py ──▶ engineer.py     │
+│                                      │                              │
+│                      ┌───────────────┼───────────────┐             │
+│                      ▼               ▼               ▼             │
+│               XGBRegressor      PyTorch MLP      Prophet           │
+│               + StandardScaler  (3-layer MLP)    (hourly TS)       │
+│                      │               │               │             │
+│                      ▼               ▼               ▼             │
+│              xgb_model.joblib   nn_model.pt   prophet_model.joblib │
+└──────────────────────┬────────────────────────────────────────────┘
+                       │
+┌──────────────────────▼────────────────────────────────────────────┐
+│                    Inference Phase (FastAPI)                        │
+│                                                                     │
+│  POST /api/predict         ──▶ XGBoost predict (batch tweets)      │
+│  POST /api/analytics/users ──▶ per-user engagement summary (CSV)   │
+│  POST /api/analytics/global-best-hour ──▶ optimal posting hour     │
+│  GET  /api/analytics/forecast          ──▶ Prophet 24h forecast    │
+└────────────────────────────────────────────────────────────────────┘
+```
 
 ```
 Raw CSV → Preprocessing → Feature Engineering → Model Training
@@ -345,6 +378,16 @@ tests/test_api.py::test_predict_empty_list PASSED
 # Mount your CSV and run training before starting the API
 twitter-train --data /mnt/data/tweets.csv --skip-prophet
 ```
+
+---
+
+## Future Improvements
+
+- **X API v2 integration** — Replace CSV-based ingestion with direct OAuth 2.0 authenticated requests to the X API v2 user timeline endpoint for real-time data
+- **SHAP explainability** — Add `/api/explain` endpoint returning per-feature SHAP values so users understand *why* a specific tweet was predicted to perform well
+- **Optimal posting time** — Given a user's historical data, recommend the top 3 daily time windows that maximize predicted engagement for their specific audience
+- **Competitor benchmarking** — Accept two user IDs and return a side-by-side analysis comparing posting frequency, content patterns, and engagement distributions
+- **Streaming predictions** — WebSocket endpoint for real-time engagement score as a user drafts a tweet, updating with each keystroke
 
 ---
 
