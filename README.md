@@ -363,3 +363,7 @@ twitter-train --data /mnt/data/tweets.csv --skip-prophet
 | **Data Pipeline** | Modular loader → preprocessor → feature → model chain |
 | **Docker** | Multi-stage build, non-root user, volume mount for models |
 | **CI/CD** | GitHub Actions lint + test pipeline |
+
+---
+
+**Harshita Guduru** — [GitHub](https://github.com/guduruharshita) · [LinkedIn](https://linkedin.com/in/guduruharshita) · [Email](mailto:guduruharshita2001@gmail.com)
