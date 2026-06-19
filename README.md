@@ -7,7 +7,6 @@
 [![XGBoost](https://img.shields.io/badge/XGBoost-2.1-EC6C00)](src/twitter_analytics/models/xgboost_model.py)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.4-EE4C2C?logo=pytorch)](src/twitter_analytics/models/neural_net.py)
 [![Tests](https://img.shields.io/badge/Tests-13%20passing-success?logo=pytest)](tests/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 End-to-end **Twitter/X engagement analytics pipeline** — from raw CSV ingestion to serving live predictions via REST API. Transforms a flat timeline export into ranked user analytics, hourly posting insights, and a three-model ensemble (XGBoost + PyTorch NN + Prophet time-series).
 
